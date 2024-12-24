@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // 데이터베이스 제공자 (PostgreSQL 사용)
+  url      = env("DATABASE_URL") // .env 파일에 설정된 DATABASE_URL 참조
+}
+
+model Admin {
+  id         Int       @id @default(autoincrement()) // Primary Key
+  username   String    @unique                      // Unique한 관리자 계정명
+  password   String                                 // 관리자 비밀번호
+  createdAt  DateTime  @default(now())              // 생성 날짜
+  offices    Office[]                               // 1:N 관계 - 여러 사무실
+
+  @@map("admins") // 실제 데이터베이스 테이블 이름
+}
+
+model Office {
+  id         Int       @id @default(autoincrement()) // Primary Key
+  name       String                                 // 사무실 이름
+  location   String                                 // 사무실 위치 정보
+  createdAt  DateTime  @default(now())              // 생성 날짜
+  adminId    Int                                    // Foreign Key (Admins.id)
+  admin      Admin      @relation(fields: [adminId], references: [id]) // 관계 설정
+  employees  Employee[]                             // 1:N 관계 - 여러 사원
+
+  @@map("offices") // 실제 데이터베이스 테이블 이름
+}
+
+model Employee {
+  id         Int       @id @default(autoincrement()) // Primary Key
+  username   String    @unique                      // Unique한 사원 계정명
+  password   String                                 // 사원 비밀번호
+  officeId   Int                                    // Foreign Key (Offices.id)
+  office     Office     @relation(fields: [officeId], references: [id]) // 관계 설정
+  attendances Attendance[]                          // 1:N 관계 - 여러 출근 기록
+  createdAt  DateTime  @default(now())              // 생성 날짜
+
+  @@map("employees") // 실제 데이터베이스 테이블 이름
+}
+
+model Attendance {
+  id          Int       @id @default(autoincrement()) // Primary Key
+  employeeId  Int                                    // Foreign Key (Employees.id)
+  employee    Employee   @relation(fields: [employeeId], references: [id]) // 관계 설정
+  checkInDate DateTime                               // 출근 날짜 및 시간
+  createdAt   DateTime  @default(now())              // 기록 생성 날짜
+
+  @@map("attendance") // 실제 데이터베이스 테이블 이름
+}
